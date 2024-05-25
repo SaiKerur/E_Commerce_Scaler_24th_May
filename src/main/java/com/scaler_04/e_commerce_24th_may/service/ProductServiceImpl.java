@@ -1,8 +1,10 @@
 package com.scaler_04.e_commerce_24th_may.service;
 
 import com.scaler_04.e_commerce_24th_may.dto.ProductDTO;
+import com.scaler_04.e_commerce_24th_may.model.Category;
 import com.scaler_04.e_commerce_24th_may.model.Product;
 import com.scaler_04.e_commerce_24th_may.model.ProductMapper;
+import com.scaler_04.e_commerce_24th_may.repositories.CategoryRepository;
 import com.scaler_04.e_commerce_24th_may.repositories.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
 
     @Override
     public List<ProductDTO> getAllProducts() {
@@ -30,12 +35,23 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ProductDTO addProduct(ProductDTO productDTO) {
+        Category category;
+
+        if (productDTO.getCategoryId() != null) {
+            category = categoryRepository.findById(productDTO.getCategoryId())
+                    .orElseThrow(() -> new RuntimeException("Category not found"));
+        } else {
+            category = new Category();
+            category.setTitle("Default Category"); // Set default category title or any other logic
+            categoryRepository.save(category);
+        }
+
         Product product = new Product(
                 productDTO.getTitle(),
                 productDTO.getDescription(),
                 productDTO.getPrice(),
                 productDTO.getImageUrl(),
-                null // Assuming you'll set the category separately
+                category
         );
         product = productRepository.save(product);
         return ProductMapper.toProductDTO(product);
@@ -48,7 +64,11 @@ public class ProductServiceImpl implements ProductService {
         product.setDescription(productDTO.getDescription());
         product.setPrice(productDTO.getPrice());
         product.setImageUrl(productDTO.getImageUrl());
-        product.setCategory(null); // Assuming you'll set the category separately
+
+        Category category = categoryRepository.findById(productDTO.getCategoryId())
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+        product.setCategory(category);
+
         product = productRepository.save(product);
         return ProductMapper.toProductDTO(product);
     }

@@ -14,7 +14,8 @@ public class ProductDTO {
     private String description;
     private double price;
     private String imageUrl;
-    private String categoryName; // assuming you want to return the category name
+    private String categoryName;
+    private Long categoryId;// assuming you want to return the category name
 
     @Override
     public String toString() {
