@@ -2,6 +2,8 @@ package com.scaler_04.e_commerce_24th_may.controller;
 
 import com.scaler_04.e_commerce_24th_may.dto.ProductDTO;
 import com.scaler_04.e_commerce_24th_may.service.ProductService;
+import com.scaler_04.e_commerce_24th_may.search.ProductSearchDocument;
+import com.scaler_04.e_commerce_24th_may.search.ProductSearchRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -9,11 +11,14 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/products")
+@RequestMapping("/api/products")
 public class ProductController {
 
     @Autowired
     private ProductService productService;
+
+    @Autowired
+    private ProductSearchRepository productSearchRepository;
 
     @GetMapping
     public List<ProductDTO> getAllProducts() {
@@ -42,5 +47,10 @@ public class ProductController {
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/search")
+    public List<ProductSearchDocument> search(@RequestParam("q") String query) {
+        return productSearchRepository.findByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(query, query);
     }
 }

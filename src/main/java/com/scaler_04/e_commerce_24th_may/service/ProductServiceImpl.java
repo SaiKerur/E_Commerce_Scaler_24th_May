@@ -7,6 +7,8 @@ import com.scaler_04.e_commerce_24th_may.model.ProductMapper;
 import com.scaler_04.e_commerce_24th_may.repositories.CategoryRepository;
 import com.scaler_04.e_commerce_24th_may.repositories.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import com.scaler_04.e_commerce_24th_may.search.ProductSearchDocument;
+import com.scaler_04.e_commerce_24th_may.search.ProductSearchRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,6 +22,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private CategoryRepository categoryRepository;
+
+    @Autowired
+    private ProductSearchRepository productSearchRepository;
 
     @Override
     public List<ProductDTO> getAllProducts() {
@@ -54,6 +59,16 @@ public class ProductServiceImpl implements ProductService {
                 category
         );
         product = productRepository.save(product);
+        // index in Elasticsearch
+        ProductSearchDocument doc = new ProductSearchDocument(
+                String.valueOf(product.getId()),
+                product.getTitle(),
+                product.getDescription(),
+                product.getPrice(),
+                product.getImageUrl(),
+                product.getCategory() != null ? product.getCategory().getTitle() : null
+        );
+        try { productSearchRepository.save(doc); } catch (Exception ignored) {}
         return ProductMapper.toProductDTO(product);
     }
 
@@ -70,11 +85,22 @@ public class ProductServiceImpl implements ProductService {
         product.setCategory(category);
 
         product = productRepository.save(product);
+        // reindex in Elasticsearch
+        ProductSearchDocument doc = new ProductSearchDocument(
+                String.valueOf(product.getId()),
+                product.getTitle(),
+                product.getDescription(),
+                product.getPrice(),
+                product.getImageUrl(),
+                product.getCategory() != null ? product.getCategory().getTitle() : null
+        );
+        try { productSearchRepository.save(doc); } catch (Exception ignored) {}
         return ProductMapper.toProductDTO(product);
     }
 
     @Override
     public void deleteProduct(Long id) {
         productRepository.deleteById(id);
+        try { productSearchRepository.deleteById(String.valueOf(id)); } catch (Exception ignored) {}
     }
 }
